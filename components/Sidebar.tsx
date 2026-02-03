@@ -33,12 +33,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
     onCloseMobile(); // Close mobile menu on navigation
   };
 
+  // On mobile, always show full sidebar (not collapsed)
+  const showCollapsed = isCollapsed && !isMobileOpen;
+
   const renderNavButton = (item: { id: View, label: string, icon: string }) => (
     <button
       key={item.id}
       onClick={() => handleNavClick(item.id)}
-      title={isCollapsed ? item.label : undefined}
-      className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 ${
+      title={showCollapsed ? item.label : undefined}
+      className={`w-full flex items-center ${showCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 ${
         currentView === item.id
           ? 'bg-indigo-600/10 text-indigo-400 border border-indigo-600/20'
           : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
@@ -47,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
       <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
       </svg>
-      {!isCollapsed && <span className="font-medium">{item.label}</span>}
+      {!showCollapsed && <span className="font-medium">{item.label}</span>}
     </button>
   );
 
@@ -61,12 +64,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
         />
       )}
 
+      {/* Sidebar container - hidden on mobile by default, visible when isMobileOpen */}
       <div className={`
-        ${isCollapsed ? 'w-20' : 'w-64'}
-        bg-slate-900 border-r border-slate-800 h-screen sticky top-0 flex flex-col p-4 z-50
+        bg-slate-900 border-r border-slate-800 h-screen flex flex-col p-4 z-50
         transition-all duration-300 ease-in-out
-        fixed lg:sticky
-        ${isMobileOpen ? 'left-0' : '-left-full lg:left-0'}
+
+        /* Mobile: fixed positioning, slide in/out */
+        fixed inset-y-0 left-0
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+
+        /* Desktop: sticky positioning, always visible, can be collapsed */
+        lg:translate-x-0 lg:sticky lg:top-0
+
+        /* Width: full on mobile when open, collapsed state only on desktop */
+        w-64 ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
       `}>
         {/* Collapse toggle button - desktop only */}
         <button
@@ -89,13 +100,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
           </svg>
         </button>
 
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-2'} mb-10 px-2 cursor-pointer`} onClick={() => handleNavClick(View.HOME)}>
+        <div className={`flex items-center ${showCollapsed ? 'justify-center' : 'space-x-2'} mb-10 px-2 cursor-pointer`} onClick={() => handleNavClick(View.HOME)}>
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/20 flex-shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          {!isCollapsed && (
+          {!showCollapsed && (
             <span className="text-xl font-black tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent italic">
               CryptoStrike
             </span>
@@ -109,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
           {/* Protected Items - Only if session exists */}
           {session && (
             <div className="pt-4 mt-4 border-t border-slate-800/50 space-y-1">
-              {!isCollapsed && <p className="px-3 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">Mining Suite</p>}
+              {!showCollapsed && <p className="px-3 mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">Mining Suite</p>}
               {protectedItems.map(renderNavButton)}
             </div>
           )}
@@ -118,8 +129,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
             {session?.role === 'admin' && (
               <button
                 onClick={() => handleNavClick(View.ADMIN)}
-                title={isCollapsed ? 'Admin Panel' : undefined}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 ${
+                title={showCollapsed ? 'Admin Panel' : undefined}
+                className={`w-full flex items-center ${showCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 ${
                   currentView === View.ADMIN
                     ? 'bg-amber-600/10 text-amber-400 border border-amber-600/20'
                     : 'text-slate-500 hover:bg-slate-800 hover:text-amber-400/80'
@@ -128,15 +139,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                {!isCollapsed && <span className="font-medium">Admin Panel</span>}
+                {!showCollapsed && <span className="font-medium">Admin Panel</span>}
               </button>
             )}
 
             {!session ? (
               <button
                 onClick={() => handleNavClick(View.AUTH)}
-                title={isCollapsed ? 'Login Identity' : undefined}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 ${
+                title={showCollapsed ? 'Login Identity' : undefined}
+                className={`w-full flex items-center ${showCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 ${
                   currentView === View.AUTH
                     ? 'bg-indigo-600/10 text-indigo-400'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
@@ -145,30 +156,30 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                {!isCollapsed && <span className="font-medium">Login Identity</span>}
+                {!showCollapsed && <span className="font-medium">Login Identity</span>}
               </button>
             ) : (
               <button
                 onClick={onLogout}
-                title={isCollapsed ? 'Logout Node' : undefined}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 text-slate-500 hover:bg-red-500/10 hover:text-red-400`}
+                title={showCollapsed ? 'Logout Node' : undefined}
+                className={`w-full flex items-center ${showCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-3 rounded-xl transition-all duration-200 text-slate-500 hover:bg-red-500/10 hover:text-red-400`}
               >
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                {!isCollapsed && <span className="font-medium">Logout Node</span>}
+                {!showCollapsed && <span className="font-medium">Logout Node</span>}
               </button>
             )}
           </div>
         </nav>
 
-        <div className={`mt-auto ${isCollapsed ? 'p-2' : 'p-4'} bg-slate-800/50 rounded-2xl border border-slate-700/50`}>
-          {!isCollapsed && <div className="text-xs text-slate-500 mb-1 font-black uppercase tracking-widest text-[8px]">Network Node</div>}
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-2'}`}>
+        <div className={`mt-auto ${showCollapsed ? 'p-2' : 'p-4'} bg-slate-800/50 rounded-2xl border border-slate-700/50`}>
+          {!showCollapsed && <div className="text-xs text-slate-500 mb-1 font-black uppercase tracking-widest text-[8px]">Network Node</div>}
+          <div className={`flex items-center ${showCollapsed ? 'justify-center' : 'space-x-2'}`}>
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${session ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-slate-600'}`}></div>
-            {!isCollapsed && <span className="text-sm font-bold text-slate-300">{session ? 'Online' : 'Standby'}</span>}
+            {!showCollapsed && <span className="text-sm font-bold text-slate-300">{session ? 'Online' : 'Standby'}</span>}
           </div>
-          {session && !isCollapsed && (
+          {session && !showCollapsed && (
             <div className="mt-2 text-[10px] text-slate-500 mono truncate opacity-60 italic">{session.email}</div>
           )}
         </div>
