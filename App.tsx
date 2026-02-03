@@ -17,6 +17,11 @@ import { workerScript } from './miningWorker';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.HOME);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sidebar_collapsed');
+    return saved === 'true';
+  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [session, setSession] = useState<UserSession | null>(() => {
     const saved = localStorage.getItem('crypto_session');
     try {
@@ -91,6 +96,22 @@ const App: React.FC = () => {
       localStorage.removeItem('crypto_session');
     }
   }, [session]);
+
+  // Persist sidebar collapsed state
+  useEffect(() => {
+    localStorage.setItem('sidebar_collapsed', String(sidebarCollapsed));
+  }, [sidebarCollapsed]);
+
+  // Close mobile menu on window resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Periodic Cloud Sync
   useEffect(() => {
@@ -302,18 +323,37 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/30 overflow-hidden">
-      <Sidebar currentView={currentView} onViewChange={setCurrentView} session={session} onLogout={handleLogout} />
-      <main className="flex-1 overflow-y-auto relative h-screen">
-        <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-6">
+      <Sidebar
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        session={session}
+        onLogout={handleLogout}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isMobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
+      <main className="flex-1 overflow-y-auto relative h-screen w-full">
+        <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="lg:hidden p-2 -ml-2 mr-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            aria-label="Open menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div className="flex items-center space-x-3 sm:space-x-6 flex-1 min-w-0">
             {session ? (
               <>
-                <div className="flex flex-col">
-                  <span className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-0.5">BTC Index</span>
-                  <span className="text-emerald-400 font-mono font-bold text-lg">${btcPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-slate-500 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] mb-0.5">BTC</span>
+                  <span className="text-emerald-400 font-mono font-bold text-sm sm:text-lg truncate">${btcPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div className="w-px h-6 bg-slate-800"></div>
-                <div className="flex flex-col">
+                <div className="w-px h-6 bg-slate-800 hidden sm:block"></div>
+                <div className="hidden sm:flex flex-col">
                   <span className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-0.5">Power Level</span>
                   <span className="text-cyan-400 font-mono font-bold text-lg">{stats.hashRate > 0 ? `${stats.hashRate} MH/s` : 'IDLE'}</span>
                 </div>
@@ -332,34 +372,34 @@ const App: React.FC = () => {
               </>
             ) : (
               <div className="flex items-center space-x-3 text-slate-500">
-                 <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center">
+                 <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center flex-shrink-0">
                     <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 3c1.223 0 2.388.22 3.468.618M15 12h.01M17 12a5 5 0 11-10 0 5 5 0 0110 0z" />
                     </svg>
                  </div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.3em]">Public Protocol Alpha</span>
+                 <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] truncate">Public Protocol Alpha</span>
               </div>
             )}
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             {session && (
                <div className="hidden md:flex items-center space-x-3 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl mr-2">
                  <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,1)]"></div>
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{session.role} authorized</span>
                </div>
             )}
-            <button onClick={() => session ? setCurrentView(View.WALLET) : setCurrentView(View.AUTH)} className={`group flex items-center space-x-3 px-5 py-2.5 rounded-2xl transition-all border ${wallet.connected ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
-              <div className={`w-2 h-2 rounded-full ${wallet.connected ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`}></div>
-              <span className="text-xs font-bold mono">{wallet.connected ? `${wallet.address?.slice(0, 6)}...${wallet.address?.slice(-4)}` : (session ? 'SYNC WALLET' : 'IDENTITY PENDING')}</span>
+            <button onClick={() => session ? setCurrentView(View.WALLET) : setCurrentView(View.AUTH)} className={`group flex items-center space-x-2 sm:space-x-3 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl transition-all border ${wallet.connected ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${wallet.connected ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`}></div>
+              <span className="text-[10px] sm:text-xs font-bold mono truncate max-w-[80px] sm:max-w-none">{wallet.connected ? `${wallet.address?.slice(0, 6)}...${wallet.address?.slice(-4)}` : (session ? 'SYNC WALLET' : 'IDENTITY PENDING')}</span>
             </button>
           </div>
         </header>
-        <div className="p-10 max-w-7xl mx-auto">{renderContent()}</div>
+        <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto">{renderContent()}</div>
       </main>
       {isMining && session && (
-        <div className="fixed bottom-10 right-10 bg-indigo-600/90 backdrop-blur-xl text-white px-6 py-4 rounded-3xl border border-white/10 flex items-center space-x-4 shadow-2xl z-50 animate-in slide-in-from-right-10">
-          <div className="relative w-4 h-4"><div className="absolute inset-0 bg-white rounded-full animate-ping"></div><div className="relative w-4 h-4 bg-white rounded-full"></div></div>
-          <div><p className="text-[10px] font-black uppercase tracking-widest opacity-70">Computing Hashes</p><p className="text-sm font-bold">Node Rig Active</p></div>
+        <div className="fixed bottom-4 right-4 sm:bottom-10 sm:right-10 bg-indigo-600/90 backdrop-blur-xl text-white px-4 sm:px-6 py-3 sm:py-4 rounded-2xl sm:rounded-3xl border border-white/10 flex items-center space-x-3 sm:space-x-4 shadow-2xl z-50 animate-in slide-in-from-right-10">
+          <div className="relative w-3 h-3 sm:w-4 sm:h-4"><div className="absolute inset-0 bg-white rounded-full animate-ping"></div><div className="relative w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full"></div></div>
+          <div><p className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest opacity-70">Computing Hashes</p><p className="text-xs sm:text-sm font-bold">Node Rig Active</p></div>
         </div>
       )}
     </div>
