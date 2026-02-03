@@ -341,7 +341,7 @@ const App: React.FC = () => {
 
   // Dashboard layout with sidebar for authenticated views
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/30 overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/30 overflow-hidden lg:flex">
       <Sidebar
         currentView={currentView}
         onViewChange={setCurrentView}
@@ -352,7 +352,7 @@ const App: React.FC = () => {
         isMobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
-      <main className="flex-1 overflow-y-auto relative h-screen w-full">
+      <main className="flex-1 overflow-y-auto relative min-h-screen w-full">
         <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           {/* Mobile menu button */}
           <button

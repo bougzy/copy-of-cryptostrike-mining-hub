@@ -64,17 +64,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, session, o
         />
       )}
 
-      {/* Sidebar container - hidden on mobile by default, visible when isMobileOpen */}
+      {/* Sidebar container - completely hidden on mobile by default, visible when isMobileOpen */}
       <div className={`
-        bg-slate-900 border-r border-slate-800 h-screen flex flex-col p-4 z-50
-        transition-all duration-300 ease-in-out
+        bg-slate-900 border-r border-slate-800 h-screen flex-col p-4 z-50
+        transition-all duration-300 ease-in-out flex-shrink-0
 
-        /* Mobile: fixed positioning, slide in/out */
+        /* Mobile: fixed positioning, hidden by default, slide in when open */
         fixed inset-y-0 left-0
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isMobileOpen ? 'flex translate-x-0' : 'hidden lg:flex -translate-x-full lg:translate-x-0'}
 
         /* Desktop: sticky positioning, always visible, can be collapsed */
-        lg:translate-x-0 lg:sticky lg:top-0
+        lg:sticky lg:top-0
 
         /* Width: full on mobile when open, collapsed state only on desktop */
         w-64 ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
