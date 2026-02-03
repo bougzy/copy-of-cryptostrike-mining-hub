@@ -321,6 +321,25 @@ const App: React.FC = () => {
     }
   };
 
+  // Check if we should show the full-page layout (no sidebar/header) for Home and Auth
+  const isFullPageView = currentView === View.HOME || currentView === View.AUTH;
+
+  // Full-page layout for Home and Auth (no sidebar, no dashboard header)
+  if (isFullPageView) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/30">
+        {currentView === View.HOME ? (
+          <Home onStart={(v) => session ? setCurrentView(v) : setCurrentView(View.AUTH)} />
+        ) : (
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <Auth onLoginSuccess={handleLoginSuccess} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Dashboard layout with sidebar for authenticated views
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500/30 overflow-hidden">
       <Sidebar
